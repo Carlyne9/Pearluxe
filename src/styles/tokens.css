@@ -1,0 +1,82 @@
+/* Source of truth: docs/design-system.md. Change values there and here together. */
+
+/* Breakpoints (CSS vars can't be used in media queries, so use these literals):
+   phone   >= 300px   (2 product columns; 1 below)
+   tablet  >= 768px   (iPad portrait + landscape)
+   desktop >= 1280px
+   wide    >= 1600px */
+
+:root {
+  /* Color: purple / violet / lavender range */
+  --color-bg: #FAF8FB;
+  --color-surface: #FFFFFF;
+  --color-ink: #1C1622;
+  --color-ink-muted: #6D6475;
+  --color-line: #E7E1EC;
+  --color-plum: #8A2A6E;
+  --color-plum-dark: #6E1F57;
+  --color-primary: var(--color-plum-dark);
+  --color-primary-hover: #561845;
+  --color-violet: #5E3B8C;
+  --color-lavender: #C9B6E4;
+  --color-lavender-soft: #F1EBF8;
+  --color-on-dark: #FFFFFF;
+
+  /* Type */
+  --font-display: 'Geist', system-ui, sans-serif;
+  --font-ui: 'Geist', system-ui, sans-serif;
+  --tracking-caps: 0.2em;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: clamp(1.125rem, 1rem + 0.4vw, 1.25rem);
+  --text-xl: clamp(1.5rem, 1.2rem + 1vw, 2rem);
+  --text-2xl: clamp(2rem, 1.5rem + 1.8vw, 3rem);
+  --text-hero: clamp(2.5rem, 1.6rem + 3.5vw, 5rem);
+
+  /* Spacing */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-24: 6rem;
+
+  --gutter: var(--space-4);
+  --max-width: 1440px;
+  --tap-min: 44px;
+
+  /* Shape + motion */
+  --radius-0: 0;
+  --radius-sm: 2px;
+  --radius-md: 8px; /* buttons, badges, product images */
+  --ratio-product: 4 / 5;
+  --ratio-social: 9 / 16;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --dur-ui: 200ms;
+  --dur-image: 400ms;
+
+  /* Layout */
+  --grid-cols: 1;
+}
+
+/* Below 300px (e.g. Galaxy Fold front screen) cards stay one per row. */
+@media (min-width: 300px) {
+  :root { --grid-cols: 2; }
+}
+
+@media (min-width: 768px) {
+  :root { --gutter: var(--space-8); --grid-cols: 3; }
+}
+
+@media (min-width: 1280px) {
+  :root { --gutter: var(--space-12); --grid-cols: 4; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-ui: 0ms; --dur-image: 0ms; }
+}

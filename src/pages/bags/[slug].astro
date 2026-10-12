@@ -1,0 +1,143 @@
+---
+import Base from '../../layouts/Base.astro';
+import Gallery from '../../components/Gallery.astro';
+import Swatches from '../../components/Swatches.astro';
+import FavoriteButton from '../../components/FavoriteButton.astro';
+import Price from '../../components/Price.astro';
+import { products, defaultColor, isSoldOut, percentOff, type Product } from '../../data/products';
+
+export function getStaticPaths() {
+  return products.map((product) => ({ params: { slug: product.slug }, props: { product } }));
+}
+
+const { product: p } = Astro.props as { product: Product };
+const soldOut = isSoldOut(p);
+const off = percentOff(p);
+const selected = defaultColor(p);
+---
+
+<Base title={`${p.name} · Pearluxe`} description={p.description}>
+  <main class="container">
+    <a class="back" href="/bags">← All bags</a>
+
+    <div class="layout" data-product={p.slug}>
+      <div class="media">
+        {p.colors.map((c) => (
+          <div class="color-photos" data-gallery-color={c.name} hidden={c.name !== selected}>
+            <Gallery images={c.images} alt={`${p.name} in ${c.name}`} video={c.video} autoplay={c.name === selected} />
+          </div>
+        ))}
+      </div>
+
+      <div class="details">
+        <div class="badges">
+          {soldOut && <span class="badge badge--muted">Out of stock</span>}
+          {!soldOut && off > 0 && <span class="badge badge--sale">{off}% off</span>}
+          {p.isNew && <span class="badge">New</span>}
+        </div>
+        <h1>{p.name}</h1>
+        {p.edition && <p class="edition">{p.edition}</p>}
+        <Price product={p} size="lg" />
+
+        <div class="field">
+          <p class="caps">Color: <span data-color-label>{selected}</span></p>
+          <Swatches slug={p.slug} colors={p.colors} selected={selected} size="lg" />
+        </div>
+
+        {p.sizes && (
+          <fieldset class="field sizes">
+            <legend class="caps">Size</legend>
+            {p.sizes.map((s, i) => (
+              <label class="size">
+                <input class="sr-only" type="radio" name="size" value={s} data-size checked={i === 0} />
+                <span>{s}</span>
+              </label>
+            ))}
+          </fieldset>
+        )}
+
+        <div class="field">
+          <p class="caps">Quantity</p>
+          <div class="qty">
+            <button type="button" data-qty-step="-1" aria-label="Decrease quantity">−</button>
+            <input data-qty type="number" value="1" min="1" max="10" inputmode="numeric" aria-label="Quantity" />
+            <button type="button" data-qty-step="1" aria-label="Increase quantity">+</button>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn add" type="button" data-add disabled={soldOut}>{soldOut ? 'Out of stock' : 'Add to cart'}</button>
+          <FavoriteButton slug={p.slug} name={p.name} class="page-fav" />
+        </div>
+
+        <section class="info">
+          <h2 class="caps">Description</h2>
+          <p>{p.description}</p>
+          <h2 class="caps">Dimensions</h2>
+          <p>{p.dimensions}</p>
+        </section>
+      </div>
+    </div>
+  </main>
+</Base>
+
+<script>
+  import '../../scripts/product';
+</script>
+
+<style>
+  .back { display: inline-block; padding-block: var(--space-6); font-size: var(--text-sm); color: var(--color-ink-muted); text-decoration: none; }
+  .layout { display: grid; gap: var(--space-8); padding-bottom: var(--space-24); }
+  @media (min-width: 768px) {
+    .layout { grid-template-columns: 1.1fr 1fr; align-items: start; }
+    .details { position: sticky; top: calc(64px + var(--space-6)); } /* clears the sticky site header */
+  }
+  @media (min-width: 1280px) { .layout { gap: var(--space-16); } }
+  .media {
+    position: relative;
+    aspect-ratio: var(--ratio-product);
+    background: var(--color-lavender-soft);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+  .color-photos { position: absolute; inset: 0; }
+  .details { display: flex; flex-direction: column; gap: var(--space-4); }
+  .badges { display: flex; gap: var(--space-1); }
+  .badges:empty { display: none; }
+  h1 { font-size: var(--text-2xl); }
+  .edition { margin: 0; color: var(--color-ink-muted); }
+  .field { display: grid; gap: var(--space-2); border: 0; margin: 0; padding: 0; }
+  .field .caps, legend { margin: 0; color: var(--color-ink-muted); }
+  .sizes { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  .sizes legend { width: 100%; margin-bottom: var(--space-2); }
+  .size span {
+    display: grid;
+    place-items: center;
+    min-width: 72px;
+    min-height: var(--tap-min);
+    padding: 0 var(--space-4);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    cursor: pointer;
+  }
+  .size input:checked + span { border-color: var(--color-primary); box-shadow: inset 0 0 0 1px var(--color-primary); }
+  .size input:focus-visible + span { outline: 2px solid var(--color-violet); outline-offset: 2px; }
+  .qty {
+    display: inline-flex;
+    width: max-content;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+  }
+  .qty button { width: var(--tap-min); height: var(--tap-min); border: 0; background: none; font-size: var(--text-lg); cursor: pointer; color: var(--color-ink); }
+  .qty input { width: 3rem; border: 0; text-align: center; font: inherit; background: none; -moz-appearance: textfield; }
+  .qty input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .actions { display: flex; gap: var(--space-2); padding-top: var(--space-2); }
+  .add { flex: 1; min-height: 52px; }
+  .add:disabled { opacity: 0.5; cursor: not-allowed; }
+  .actions :global(.page-fav) { width: 52px; height: 52px; border: 1px solid var(--color-line); }
+  .info { border-top: 1px solid var(--color-line); padding-top: var(--space-6); margin-top: var(--space-4); }
+  .info h2 { font-family: var(--font-ui); color: var(--color-ink-muted); margin-bottom: var(--space-2); }
+  .info p { margin: 0 0 var(--space-6); }
+</style>

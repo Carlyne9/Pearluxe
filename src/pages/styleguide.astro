@@ -1,0 +1,134 @@
+---
+// Internal style guide: tokens, logo, components. Not linked from the shop.
+import Base from '../layouts/Base.astro';
+import ProductCard from '../components/ProductCard.astro';
+import Logo from '../components/Logo.astro';
+import VideoHero from '../components/VideoHero.astro';
+import { products } from '../data/products';
+
+// [label, text color var, background var]
+const logoTiles = [
+  ['Black', '#000', 'surface'], ['Grey', 'ink-muted', 'surface'], ['White', 'on-dark', 'ink'],
+  ['Plum', 'plum', 'surface'], ['Plum dark', 'plum-dark', 'lavender-soft'], ['Violet', 'violet', 'surface'],
+  ['White on plum', 'on-dark', 'plum'], ['White on violet', 'on-dark', 'violet'],
+];
+const v = (c: string) => (c.startsWith('#') ? c : `var(--color-${c})`);
+
+const colors = [
+  'bg', 'surface', 'ink', 'ink-muted', 'line',
+  'plum', 'plum-dark', 'violet', 'lavender', 'lavender-soft',
+];
+
+---
+
+<Base title="Pearluxe · Style guide">
+  <p class="announce caps">Free delivery in Accra on orders over GH₵ 1,000</p>
+  <VideoHero />
+
+  <main class="container stack">
+    <header>
+      <p class="caps muted">Pearluxe design system · v0</p>
+      <p class="hero">Bags, curated.</p>
+    </header>
+
+    <section class="stack">
+      <h2>Logo</h2>
+      <div class="logos">
+        {logoTiles.map(([label, fg, bg]) => (
+          <figure style={`color: ${v(fg)}; background: ${v(bg)}`}>
+            <Logo class="lockup" />
+            <div class="row">
+              <Logo variant="monogram" class="mono" />
+              <Logo variant="wordmark" class="word" />
+            </div>
+            <figcaption class="caps">{label}</figcaption>
+          </figure>
+        ))}
+      </div>
+    </section>
+
+    <section class="stack">
+      <h2>Colors</h2>
+      <div class="swatches">
+        {colors.map((c) => (
+          <div>
+            <div class="swatch" style={`background: var(--color-${c})`} />
+            <p class="caps">{c}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <section class="stack">
+      <h2>Type</h2>
+      <p class="t-hero">Display hero</p>
+      <p class="t-2xl">Heading 2xl · Geist</p>
+      <p class="t-xl">Heading xl</p>
+      <p>Body text in Geist. Calm, readable, with room to breathe on every screen size.</p>
+      <p class="caps">Uppercase label · tracked 0.2em</p>
+    </section>
+
+    <section class="stack">
+      <h2>Buttons</h2>
+      <div class="row">
+        <button class="btn">Add to cart</button>
+        <button class="btn btn--outline">Wishlist</button>
+      </div>
+    </section>
+
+    <section class="stack">
+      <h2>Product grid</h2>
+      <p class="muted">2 columns on phones · 3 on iPad · 4 on desktop · <a href="/bags">See the full bags page →</a></p>
+      <div class="grid">
+        {products.slice(0, 4).map((p) => <ProductCard product={p} />)}
+      </div>
+    </section>
+  </main>
+</Base>
+
+<style>
+  .announce {
+    margin: 0;
+    padding: var(--space-2) var(--gutter);
+    background: var(--color-lavender-soft);
+    color: var(--color-primary);
+    text-align: center;
+  }
+  .stack { display: grid; gap: var(--space-6); padding-block: var(--space-8); }
+  .muted { color: var(--color-ink-muted); margin: 0; }
+  .hero, .t-hero { font-family: var(--font-display); font-size: var(--text-hero); margin: 0; }
+  .t-2xl { font-family: var(--font-display); font-size: var(--text-2xl); margin: 0; }
+  .t-xl { font-family: var(--font-display); font-size: var(--text-xl); margin: 0; }
+  h2 { font-size: var(--text-xl); }
+  .swatches {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: var(--space-4);
+  }
+  .logos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: var(--space-4);
+  }
+  .logos figure {
+    margin: 0;
+    padding: var(--space-6);
+    border: 1px solid var(--color-line);
+    display: grid;
+    justify-items: center;
+    gap: var(--space-4);
+  }
+  .logos .row { align-items: center; }
+  .lockup { width: 120px; height: auto; }
+  .mono { width: 32px; height: auto; }
+  .word { width: 110px; height: auto; }
+  .logos figcaption { opacity: 0.8; }
+  .swatch { aspect-ratio: 1; border: 1px solid var(--color-line); }
+  .swatches p { margin: var(--space-2) 0 0; }
+  .row { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(var(--grid-cols), minmax(0, 1fr));
+    gap: var(--space-8) var(--space-4);
+  }
+</style>

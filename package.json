@@ -1,0 +1,14 @@
+{
+  "name": "pearluxe-bagshop",
+  "type": "module",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "node node_modules/astro/bin/astro.mjs dev --host",
+    "build": "node node_modules/astro/bin/astro.mjs build",
+    "preview": "node node_modules/astro/bin/astro.mjs preview --host"
+  },
+  "dependencies": {
+    "astro": "^7.3.8"
+  }
+}

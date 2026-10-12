@@ -1,0 +1,25 @@
+---
+import { ghs, percentOff, type Product } from '../data/products';
+
+interface Props {
+  product: Product;
+  size?: 'md' | 'lg';
+}
+
+const { product, size = 'md' } = Astro.props;
+const off = percentOff(product);
+---
+
+<p class={`price price--${size}`}>
+  <span class:list={{ sale: off }}>{ghs(product.price)}</span>
+  {off > 0 && <s>{ghs(product.compareAt!)}</s>}
+</p>
+
+<style>
+  .price { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2); }
+  .price > span { font-weight: 600; font-size: var(--text-lg); }
+  .price--lg > span { font-size: var(--text-xl); }
+  .sale { color: var(--color-primary); }
+  s { color: var(--color-ink-muted); font-size: var(--text-sm); }
+  .price--lg s { font-size: var(--text-base); }
+</style>

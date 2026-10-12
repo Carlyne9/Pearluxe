@@ -1,0 +1,199 @@
+---
+import Base from '../layouts/Base.astro';
+import { cartCatalog } from '../data/products';
+
+const catalog = cartCatalog();
+---
+
+<Base title="Cart · Pearluxe">
+  <main class="container">
+    <header class="head">
+      <h1>Your cart</h1>
+      <p class="count" data-count></p>
+    </header>
+
+    <div class="layout" data-filled hidden>
+      <ul class="lines" data-lines></ul>
+
+      <aside class="summary" aria-labelledby="summary-title">
+        <h2 id="summary-title">Order summary</h2>
+        <dl>
+          <div><dt data-items-label>Subtotal</dt><dd data-subtotal></dd></div>
+          <div><dt>Delivery</dt><dd class="muted">Calculated at checkout</dd></div>
+          <div class="total"><dt>Total</dt><dd data-total></dd></div>
+        </dl>
+        <a class="btn checkout" href="/checkout">Proceed to checkout</a>
+        <a class="continue" href="/bags">Continue shopping</a>
+        <ul class="assure">
+          <li><span aria-hidden="true">✓</span> Pay securely with card or mobile money (Paystack)</li>
+          <li><span aria-hidden="true">✓</span> Delivery across Accra, or to your bus station outside Accra</li>
+          <li><span aria-hidden="true">✓</span> Prefer to collect? Choose pickup at checkout</li>
+        </ul>
+      </aside>
+    </div>
+
+    <div class="empty" data-empty hidden>
+      <p>Your cart is empty.</p>
+      <a class="btn" href="/bags">Shop bags</a>
+      <a class="continue" href="/bags?tab=favs">View favourites</a>
+    </div>
+  </main>
+
+  <!-- Phones: total + checkout always within thumb reach. -->
+  <div class="mobile-bar" data-mobile-bar hidden>
+    <div><small>Total</small><strong data-total></strong></div>
+    <a class="btn" href="/checkout">Checkout</a>
+  </div>
+</Base>
+
+<script is:inline define:vars={{ catalog }}>
+  window.__catalog = catalog;
+</script>
+
+<script>
+  import { addFavorite, removeFromCart, setQty } from '../lib/store';
+  import { cartLines, cartTotals, esc, ghs } from '../lib/cart-view';
+
+  const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel)!;
+  const list = $('[data-lines]');
+
+  function render() {
+    const lines = cartLines();
+    const { count, subtotal } = cartTotals();
+    $('[data-filled]').hidden = $('[data-mobile-bar]').hidden = count === 0;
+    $('[data-empty]').hidden = count > 0;
+    $('[data-count]').textContent = count ? `${count} ${count === 1 ? 'item' : 'items'}` : '';
+    $('[data-items-label]').textContent = `Subtotal (${count} ${count === 1 ? 'item' : 'items'})`;
+    $('[data-subtotal]').textContent = ghs(subtotal);
+    document.querySelectorAll('[data-total]').forEach((el) => (el.textContent = ghs(subtotal)));
+
+    list.innerHTML = lines
+      .map((l) => {
+        const p = l.product;
+        const detail = [l.color, l.size].filter(Boolean).map((s) => esc(s!)).join(' · ');
+        const was = p.compareAt ? `<s>${ghs(p.compareAt)}</s>` : '';
+        return `
+        <li class="line">
+          <a class="thumb" href="${p.url}"><img src="${l.image}" alt="${esc(p.name)} in ${esc(l.color)}" /></a>
+          <div class="info">
+            <a class="name" href="${p.url}">${esc(p.name)}</a>
+            <p class="meta"><span class="dot" style="background:${l.hex}"></span>${detail}</p>
+            <p class="unit"><span class="${was ? 'sale' : ''}">${ghs(p.price)}</span>${was}</p>
+          </div>
+          <div class="qty" aria-label="Quantity">
+            <button type="button" data-step="-1" data-i="${l.index}" aria-label="Decrease quantity" ${l.qty <= 1 ? 'disabled' : ''}>−</button>
+            <span aria-live="polite">${l.qty}</span>
+            <button type="button" data-step="1" data-i="${l.index}" aria-label="Increase quantity" ${l.qty >= 10 ? 'disabled' : ''}>+</button>
+          </div>
+          <strong class="line-total">${ghs(p.price * l.qty)}</strong>
+          <div class="actions">
+            <button type="button" data-save="${l.index}" data-slug="${l.slug}">Save for later</button>
+            <button type="button" data-remove="${l.index}">Remove</button>
+          </div>
+        </li>`;
+      })
+      .join('');
+  }
+
+  list.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('button');
+    if (!btn) return;
+    const i = Number(btn.dataset.i ?? btn.dataset.remove ?? btn.dataset.save);
+    const line = cartLines().find((l) => l.index === i);
+    if (!line) return;
+    if (btn.dataset.step) setQty(i, line.qty + Number(btn.dataset.step));
+    else if (btn.dataset.remove) removeFromCart(i);
+    else if (btn.dataset.save) {
+      addFavorite(line.slug);
+      removeFromCart(i);
+    }
+  });
+
+  document.addEventListener('store:change', render);
+  render();
+</script>
+
+<style>
+  main { padding-block: var(--space-8) var(--space-24); }
+  .head { display: flex; align-items: baseline; gap: var(--space-4); margin-bottom: var(--space-8); }
+  h1 { font-size: var(--text-2xl); }
+  .count { margin: 0; color: var(--color-ink-muted); }
+  .layout { display: grid; gap: var(--space-8); }
+  @media (min-width: 1024px) {
+    .layout { grid-template-columns: minmax(0, 1fr) 360px; align-items: start; }
+    .summary { position: sticky; top: calc(64px + var(--space-6)); }
+  }
+
+  .lines { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--color-line); }
+  .lines :global(.line) {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr) auto;
+    grid-template-areas: 'thumb info info' 'thumb qty total' 'thumb actions actions';
+    align-items: center;
+    gap: var(--space-2) var(--space-4);
+    padding-block: var(--space-6);
+    border-bottom: 1px solid var(--color-line);
+  }
+  @media (min-width: 768px) {
+    .lines :global(.line) {
+      grid-template-columns: 112px minmax(0, 1fr) auto 110px;
+      grid-template-areas: 'thumb info qty total' 'thumb actions actions actions';
+      align-items: center;
+    }
+  }
+  .lines :global(.thumb) { grid-area: thumb; aspect-ratio: var(--ratio-product); border-radius: var(--radius-md); overflow: hidden; background: var(--color-lavender-soft); align-self: start; }
+  .lines :global(.thumb img) { width: 100%; height: 100%; object-fit: cover; }
+  .lines :global(.info) { grid-area: info; min-width: 0; }
+  .lines :global(.name) { font-weight: 500; text-decoration: none; }
+  .lines :global(.meta) { display: flex; align-items: center; gap: var(--space-2); margin: var(--space-1) 0 0; font-size: var(--text-sm); color: var(--color-ink-muted); }
+  .lines :global(.dot) { width: 12px; height: 12px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.15); }
+  .lines :global(.unit) { margin: var(--space-1) 0 0; font-size: var(--text-sm); display: flex; gap: var(--space-2); }
+  .lines :global(.unit .sale) { color: var(--color-primary); }
+  .lines :global(.unit s) { color: var(--color-ink-muted); }
+  .lines :global(.line-total) { grid-area: total; text-align: right; font-weight: 600; }
+  .lines :global(.qty) {
+    grid-area: qty;
+    display: inline-flex;
+    align-items: center;
+    width: max-content;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+  }
+  .lines :global(.qty button) { width: 40px; height: 40px; border: 0; background: none; font-size: var(--text-lg); color: var(--color-ink); cursor: pointer; }
+  .lines :global(.qty button:disabled) { opacity: 0.3; cursor: default; }
+  .lines :global(.qty span) { min-width: 2ch; text-align: center; }
+  .lines :global(.actions) { grid-area: actions; display: flex; gap: var(--space-4); align-items: center; }
+  .lines :global(.actions button) { min-height: var(--tap-min); padding: 0; border: 0; background: none; font: inherit; font-size: var(--text-sm); color: var(--color-ink-muted); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+
+  .summary { padding: var(--space-6); border: 1px solid var(--color-line); border-radius: var(--radius-md); background: var(--color-surface); }
+  .summary h2 { font-size: var(--text-lg); margin-bottom: var(--space-4); }
+  dl { margin: 0; }
+  dl div { display: flex; justify-content: space-between; padding-block: var(--space-2); }
+  dd { margin: 0; }
+  .muted { color: var(--color-ink-muted); font-size: var(--text-sm); }
+  .total { border-top: 1px solid var(--color-line); margin-top: var(--space-2); padding-top: var(--space-4) !important; font-weight: 600; font-size: var(--text-lg); }
+  .total dd { color: var(--color-primary); }
+  .checkout { width: 100%; min-height: 52px; margin-top: var(--space-4); }
+  .continue { display: block; margin-top: var(--space-3); text-align: center; font-size: var(--text-sm); color: var(--color-ink-muted); }
+  .assure span { color: var(--color-primary); font-weight: 600; margin-right: var(--space-1); }
+  .assure { list-style: none; margin: var(--space-6) 0 0; padding: var(--space-4); border-radius: var(--radius-md); background: var(--color-lavender-soft); display: grid; gap: var(--space-3); font-size: var(--text-sm); }
+
+  .empty { display: grid; justify-items: start; gap: var(--space-4); }
+  .empty p { margin: 0; font-size: var(--text-lg); }
+
+  .mobile-bar {
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-3) var(--gutter);
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-line);
+  }
+  .mobile-bar small { display: block; color: var(--color-ink-muted); }
+  .mobile-bar .btn { flex: 1; max-width: 220px; min-height: 48px; }
+  @media (min-width: 1024px) { .mobile-bar { display: none; } }
+</style>

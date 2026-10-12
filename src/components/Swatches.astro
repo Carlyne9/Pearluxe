@@ -1,0 +1,61 @@
+---
+import type { Color } from '../data/products';
+
+interface Props {
+  slug: string;
+  colors: Color[];
+  selected: string;
+  size?: 'sm' | 'lg';
+}
+
+const { slug, colors, selected, size = 'sm' } = Astro.props;
+---
+
+<fieldset class={`swatches swatches--${size}`}>
+  <legend class="sr-only">Color</legend>
+  {colors.map((c) => (
+    <label class="swatch" title={c.inStock ? c.name : `${c.name}: out of stock`}>
+      <input
+        class="sr-only"
+        type="radio"
+        name={`color-${slug}`}
+        value={c.name}
+        data-swatch
+        checked={c.name === selected}
+        disabled={!c.inStock}
+      />
+      <span class="dot" style={`--swatch: ${c.hex}`} />
+      <span class="sr-only">{c.name}{!c.inStock && ' (out of stock)'}</span>
+    </label>
+  ))}
+</fieldset>
+
+<style>
+  .swatches { display: flex; flex-wrap: wrap; border: 0; margin: 0 0 0 -8px; padding: 0; }
+  .swatch { display: grid; place-items: center; width: 38px; height: 38px; cursor: pointer; }
+  .swatches--lg .swatch { width: var(--tap-min); height: var(--tap-min); }
+  .dot {
+    position: relative;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--swatch);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-ink) 15%, transparent);
+    transition: box-shadow var(--dur-ui) var(--ease);
+  }
+  .swatches--lg .dot { width: 32px; height: 32px; }
+  input:checked + .dot {
+    box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 3.5px var(--color-primary);
+  }
+  input:focus-visible + .dot { outline: 2px solid var(--color-violet); outline-offset: 4px; }
+  /* Out of stock: faded with a diagonal strike, and not selectable. */
+  input:disabled + .dot { opacity: 0.45; }
+  input:disabled + .dot::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, transparent 46%, var(--color-ink) 46%, var(--color-ink) 54%, transparent 54%);
+  }
+  .swatch:has(input:disabled) { cursor: not-allowed; }
+</style>

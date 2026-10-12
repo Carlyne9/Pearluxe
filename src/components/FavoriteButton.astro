@@ -1,0 +1,31 @@
+---
+interface Props {
+  slug: string;
+  name: string;
+  class?: string;
+}
+
+const { slug, name, class: className } = Astro.props;
+---
+
+<button class:list={['fav', className]} type="button" data-fav={slug} aria-pressed="false" aria-label={`Save ${name} to favourites`}>
+  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+    <path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.6 4.5 7 4.5c2 0 3.4 1.1 5 3 1.6-1.9 3-3 5-3 3.4 0 5.6 3.5 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2z" />
+  </svg>
+</button>
+
+<style>
+  .fav {
+    display: grid;
+    place-items: center;
+    width: var(--tap-min);
+    height: var(--tap-min);
+    border: 0;
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-primary);
+    cursor: pointer;
+  }
+  svg { fill: none; stroke: currentColor; stroke-width: 1.6; transition: fill var(--dur-ui) var(--ease); }
+  .fav[aria-pressed='true'] svg { fill: currentColor; }
+</style>

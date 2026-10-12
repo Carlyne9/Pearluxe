@@ -1,0 +1,110 @@
+---
+import Gallery from './Gallery.astro';
+import Swatches from './Swatches.astro';
+import FavoriteButton from './FavoriteButton.astro';
+import Price from './Price.astro';
+import { defaultColor, isSoldOut, percentOff, productUrl, type Product } from '../data/products';
+
+interface Props {
+  product: Product;
+}
+
+const { product: p } = Astro.props;
+const url = productUrl(p);
+const soldOut = isSoldOut(p);
+const off = percentOff(p);
+const selected = defaultColor(p);
+---
+
+<article
+  class="card"
+  data-product={p.slug}
+  data-default-size={p.sizes?.[0]}
+  data-tags={[p.isNew && 'new', off && 'sale'].filter(Boolean).join(' ')}
+>
+  <div class:list={['media', { 'sold-out': soldOut }]}>
+    {p.colors.map((c) => (
+      <div class="color-photos" data-gallery-color={c.name} hidden={c.name !== selected}>
+        <Gallery images={c.images} alt={`${p.name} in ${c.name}`} href={url} />
+      </div>
+    ))}
+    <div class="badges">
+      {soldOut && <span class="badge badge--muted">Out of stock</span>}
+      {!soldOut && off > 0 && <span class="badge badge--sale">{off}% off</span>}
+      {p.isNew && <span class="badge">New</span>}
+    </div>
+    <FavoriteButton slug={p.slug} name={p.name} class="card-fav fav--on-image" />
+  </div>
+
+  <div class="info">
+    <a class="name" href={url}><h3>{p.name}</h3></a>
+    {p.edition && <p class="edition">{p.edition}</p>}
+    <Swatches slug={p.slug} colors={p.colors} selected={selected} />
+    <Price product={p} />
+    <div class="actions">
+      <button class="btn btn--outline add" type="button" data-add disabled={soldOut}>
+        {soldOut ? (
+          <><span class="long">Out of stock</span><span class="short">Sold out</span></>
+        ) : (
+          <><span class="long">Add to cart</span><span class="short">Add</span></>
+        )}
+      </button>
+      <FavoriteButton slug={p.slug} name={p.name} class="card-fav-row fav--in-row" />
+    </div>
+  </div>
+</article>
+
+<script>
+  import '../scripts/product';
+</script>
+
+<style>
+  .card { display: flex; flex-direction: column; container-type: inline-size; }
+  .media {
+    position: relative;
+    aspect-ratio: var(--ratio-product);
+    background: var(--color-lavender-soft);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+  .color-photos { position: absolute; inset: 0; }
+  .sold-out :global(img) { opacity: 0.55; }
+  .badges {
+    position: absolute;
+    top: var(--space-3);
+    left: var(--space-3);
+    right: var(--space-3);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    pointer-events: none;
+  }
+  .media :global(.card-fav) { position: absolute; top: var(--space-2); right: var(--space-2); }
+  .info { display: flex; flex-direction: column; gap: var(--space-1); flex: 1; padding-top: var(--space-3); }
+  .name { text-decoration: none; }
+  h3 { font-family: var(--font-ui); font-size: var(--text-base); font-weight: 500; }
+  @media (hover: hover) {
+    .name:hover h3 { text-decoration: underline; text-underline-offset: 3px; }
+  }
+  .edition { margin: 0; font-size: var(--text-sm); color: var(--color-ink-muted); }
+  .actions { display: flex; gap: var(--space-2); margin-top: auto; }
+  .add { flex: 1; min-width: 0; padding-inline: var(--space-2); letter-spacing: 0.08em; white-space: nowrap; }
+  .actions :global(.card-fav-row) { flex: none; border: 1px solid var(--color-line); }
+  /* shortcut: temporary A/B test of heart position (/bags?fav=image shows the old layout); delete the loser once decided. */
+  :global(html:not([data-fav='image'])) .media :global(.fav--on-image),
+  :global(html[data-fav='image']) .actions :global(.fav--in-row) { display: none; }
+  .info :global(.price) { margin-bottom: var(--space-3); }
+  .short { display: none; }
+  :global(html[data-fav='image']) .badges { right: 56px; }
+
+  /* Narrow cards (2 columns on small phones, e.g. 320px and below). */
+  @container (max-width: 170px) {
+    .long { display: none; }
+    .short { display: inline; }
+    .badges { top: var(--space-2); left: var(--space-2); }
+    .media :global(.badge) { padding: 2px 6px; font-size: 0.6875rem; }
+    h3 { font-size: var(--text-sm); }
+    .info :global(.price > span) { font-size: var(--text-base); }
+  }
+  .add:disabled { opacity: 0.5; cursor: not-allowed; }
+</style>
